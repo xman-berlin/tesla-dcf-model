@@ -507,6 +507,49 @@
             display: none !important;
         }
 
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--border-color);
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+            cursor: help;
+            position: relative;
+        }
+
+        .tooltip-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 400;
+            white-space: nowrap;
+            z-index: 1000;
+            min-width: 180px;
+            max-width: 280px;
+            white-space: normal;
+            line-height: 1.4;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .control-label-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
         @media (max-width: 1280px) {
             .kpi-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -530,25 +573,37 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">Lieferwachstum 2026-2030</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Lieferwachstum 2026-2030</label>
+                        <span class="tooltip-icon" data-tooltip="Jährliches Wachstum der Fahrzeuglieferungen in den Jahren 2026-2030. Basis 2025: 1.79M Einheiten.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="autoGrowthEarly" min="0" max="25" value="10" step="1">
                         <span class="control-value" id="autoGrowthEarlyVal">10%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Lieferwachstum 2031-2035</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Lieferwachstum 2031-2035</label>
+                        <span class="tooltip-icon" data-tooltip="Jährliches Wachstum der Fahrzeuglieferungen in den Jahren 2031-2035.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="autoGrowthLate" min="0" max="15" value="7" step="1">
                         <span class="control-value" id="autoGrowthLateVal">7%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Durchschnittspreis (ASP) in USD</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Durchschnittspreis (ASP)</label>
+                        <span class="tooltip-icon" data-tooltip="Durchschnittlicher Verkaufspreis pro Fahrzeug in USD. Beeinflusst direkt den Automotive-Umsatz.">?</span>
+                    </div>
                     <input type="number" id="autoASP" value="38800" min="30000" max="50000" step="1000">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Gross Margin</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Gross Margin</label>
+                        <span class="tooltip-icon" data-tooltip="Bruttomarge = (Umsatz - COGS) / Umsatz. Höhere Margen steigern den FCF.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="autoMargin" min="12" max="25" value="18" step="1">
                         <span class="control-value" id="autoMarginVal">18%</span>
@@ -563,14 +618,20 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">Jährliches Wachstum</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Jährliches Wachstum</label>
+                        <span class="tooltip-icon" data-tooltip="Wachstumsrate des Energy-Segments (Megapack, Mega Block). 2025: 46.7 GWh deployed, $12.8B Umsatz.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="energyGrowth" min="10" max="50" value="25" step="1">
                         <span class="control-value" id="energyGrowthVal">25%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Gross Margin</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Gross Margin</label>
+                        <span class="tooltip-icon" data-tooltip="Bruttomarge für Energy-Produkte. Tesla hat 5 Quartale in Folge Rekordmargen erzielt.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="energyMargin" min="20" max="35" value="26" step="1">
                         <span class="control-value" id="energyMarginVal">26%</span>
@@ -585,7 +646,10 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">Jährliches Wachstum</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Jährliches Wachstum</label>
+                        <span class="tooltip-icon" data-tooltip="Wachstum des Services-Segments: Service, Teile, Gebrauchtwagen, Finanzen.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="servicesGrowth" min="5" max="25" value="15" step="1">
                         <span class="control-value" id="servicesGrowthVal">15%</span>
@@ -600,18 +664,27 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">Aktuelle Subscribers (Millionen)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Aktuelle Subscribers</label>
+                        <span class="tooltip-icon" data-tooltip="Aktive FSD-Abonnenten in Millionen. Q4 2025: erstmals 1.1M offiziell disclosed.">?</span>
+                    </div>
                     <input type="number" id="fsdSubscribers" value="1.1" min="0.1" max="10" step="0.1">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Wachstum p.a.</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Wachstum p.a.</label>
+                        <span class="tooltip-icon" data-tooltip="Jährliches Wachstum der FSD-Subscriber. Historisch ~38% YoY.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="fsdGrowth" min="10" max="50" value="30" step="1">
                         <span class="control-value" id="fsdGrowthVal">30%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Preis/Monat (USD)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Preis/Monat</label>
+                        <span class="tooltip-icon" data-tooltip="Monatlicher FSD-Abonnementpreis.aktuell $99/Monat. Optional auch Einmalkauf.">?</span>
+                    </div>
                     <input type="number" id="fsdPrice" value="99" min="50" max="200" step="10">
                 </div>
             </div>
@@ -623,39 +696,57 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">Startjahr</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Startjahr</label>
+                        <span class="tooltip-icon" data-tooltip="Jahr, in dem Robotaxi-Dienste starten. Austin: Juni 2025 (supervised), Jan 2026 (unsupervised).">?</span>
+                    </div>
                     <input type="number" id="robotaxiStartYear" value="2026" min="2025" max="2030">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Flotte 2026</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Flotte 2026</label>
+                        <span class="tooltip-icon" data-tooltip="Anzahl Robotaxi-Fahrzeuge in 2026. Wolfe Research schätzt ~7,200.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="robotaxiFleetStart" min="1000" max="20000" value="7200" step="500">
                         <span class="control-value" id="robotaxiFleetStartVal">7,200</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Flottenwachstum p.a.</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Flottenwachstum p.a.</label>
+                        <span class="tooltip-icon" data-tooltip="Jährliches Wachstum der Flotte. 150% = 2.5x pro Jahr. Sehr sensibel für den Fair Value!">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="robotaxiFleetGrowth" min="50" max="300" value="150" step="10">
                         <span class="control-value" id="robotaxiFleetGrowthVal">150%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Preis/Meile (USD)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Preis/Meile</label>
+                        <span class="tooltip-icon" data-tooltip="Preis pro gefahrene Meile. Musks Ziel: <$0.20/Meile bis 2030. Aktuell ~$1/Meile bei Uber.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="robotaxiPricePerMile" min="0.2" max="2" value="1" step="0.1">
                         <span class="control-value" id="robotaxiPricePerMileVal">$1.00</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Utilization Rate</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Utilization Rate</label>
+                        <span class="tooltip-icon" data-tooltip="Anteil der Zeit, in der das Fahrzeug fährt. 55% = ca. 13h/Tag bei 24h Betrieb.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="robotaxiUtilization" min="30" max="80" value="55" step="5">
                         <span class="control-value" id="robotaxiUtilizationVal">55%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Meilen/Fahrzeug/Tag</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Meilen/Fahrzeug/Tag</label>
+                        <span class="tooltip-icon" data-tooltip="Durchschnittliche Meilen pro Fahrzeug pro Tag. 150 Meilen = ~2.5h Fahrtzeit.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="robotaxiMilesPerDay" min="50" max="300" value="150" step="10">
                         <span class="control-value" id="robotaxiMilesPerDayVal">150</span>
@@ -670,46 +761,67 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">Startjahr Produktion</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Startjahr Produktion</label>
+                        <span class="tooltip-icon" data-tooltip="Jahr, in dem Optimus-Produktion startet. Musk: Ende 2026 intern, 2027 extern.">?</span>
+                    </div>
                     <input type="number" id="optimusStartYear" value="2027" min="2026" max="2030">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Units 2027</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Units 2027</label>
+                        <span class="tooltip-icon" data-tooltip="Produzierte Optimus-Einheiten 2027. Musk: 2025 ~800 intern, 2027 10K-50K.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="optimusUnits2027" min="1000" max="100000" value="25000" step="1000">
                         <span class="control-value" id="optimusUnits2027Val">25K</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Units 2030</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Units 2030</label>
+                        <span class="tooltip-icon" data-tooltip="Produzierte Optimus-Einheiten 2030. Roadmap: 100K-1M. Deutsche Bank: $10B Revenue bei 200K x $50K.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="optimusUnits2030" min="50000" max="2000000" value="500000" step="10000">
                         <span class="control-value" id="optimusUnits2030Val">500K</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Units 2035</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Units 2035</label>
+                        <span class="tooltip-icon" data-tooltip="Produzierte Optimus-Einheiten 2035. Goldman Sachs: $38B Humanoid Market by 2035.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="optimusUnits2035" min="200000" max="10000000" value="2000000" step="50000">
                         <span class="control-value" id="optimusUnits2035Val">2M</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">ASP (USD)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">ASP</label>
+                        <span class="tooltip-icon" data-tooltip="Durchschnittspreis. Zielpreis bei Skalierung: $20K-$30K.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="optimusASP" min="15000" max="100000" value="30000" step="1000">
                         <span class="control-value" id="optimusASPVal">$30K</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Gross Margin Initial</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Gross Margin Initial</label>
+                        <span class="tooltip-icon" data-tooltip="Bruttomarge bei Produktionsstart. Niedrig wegen geringer Stückzahlen.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="optimusMarginInitial" min="5" max="20" value="10" step="1">
                         <span class="control-value" id="optimusMarginInitialVal">10%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Gross Margin at Scale</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Gross Margin at Scale</label>
+                        <span class="tooltip-icon" data-tooltip="Bruttomarge bei grosser Stückzahl. Ähnlich wie Automotive bei Skalierung.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="optimusMarginScale" min="25" max="50" value="40" step="1">
                         <span class="control-value" id="optimusMarginScaleVal">40%</span>
@@ -726,6 +838,7 @@
                 <div class="control-group">
                     <div class="toggle-row">
                         <label class="control-label">Aktivieren</label>
+                        <span class="tooltip-icon" data-tooltip="Platzhalter für zukünftige Revenue-Streams (z.B. AI-Services, Hardware).">?</span>
                         <label class="toggle">
                             <input type="checkbox" id="terafabEnabled">
                             <span class="toggle-slider"></span>
@@ -733,15 +846,24 @@
                     </div>
                 </div>
                 <div class="control-group hidden" id="terafabInputs">
-                    <label class="control-label">Startjahr</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Startjahr</label>
+                        <span class="tooltip-icon" data-tooltip="Jahr, ab dem Terafab Revenue generiert.">?</span>
+                    </div>
                     <input type="number" id="terafabStartYear" value="2028" min="2026" max="2032">
                 </div>
                 <div class="control-group hidden" id="terafabRevenueInputs">
-                    <label class="control-label">Revenue Schätzung 2030 (Mrd. USD)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Revenue 2030</label>
+                        <span class="tooltip-icon" data-tooltip="Erwarteter Revenue 2030 in Mrd. USD.">?</span>
+                    </div>
                     <input type="number" id="terafabRevenue2030" value="5" min="1" max="50" step="1">
                 </div>
                 <div class="control-group hidden" id="terafabRevenueInputs2">
-                    <label class="control-label">Revenue Schätzung 2035 (Mrd. USD)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Revenue 2035</label>
+                        <span class="tooltip-icon" data-tooltip="Erwarteter Revenue 2035 in Mrd. USD.">?</span>
+                    </div>
                     <input type="number" id="terafabRevenue2035" value="20" min="5" max="100" step="5">
                 </div>
             </div>
@@ -753,32 +875,47 @@
             </div>
             <div class="accordion-content">
                 <div class="control-group">
-                    <label class="control-label">WACC</label>
+                    <div class="control-label-row">
+                        <label class="control-label">WACC</label>
+                        <span class="tooltip-icon" data-tooltip="Weighted Average Cost of Capital. Diskontierungszins für zukünftige Cashflows. Niedriger = höherer Fair Value.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="wacc" min="7" max="15" value="10" step="0.5">
                         <span class="control-value" id="waccVal">10%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Terminal Growth Rate</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Terminal Growth Rate</label>
+                        <span class="tooltip-icon" data-tooltip="Ewiges Wachstum nach Prognosezeitraum. Sollte unter langfristiger Inflation (~2-3%) liegen.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="terminalGrowth" min="1" max="5" value="3" step="0.5">
                         <span class="control-value" id="terminalGrowthVal">3%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Steuersatz</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Steuersatz</label>
+                        <span class="tooltip-icon" data-tooltip="Effektiver Steuersatz auf EBIT. US-Corporate Tax: 21%.">?</span>
+                    </div>
                     <div class="control-row">
                         <input type="range" id="taxRate" min="10" max="25" value="18" step="1">
                         <span class="control-value" id="taxRateVal">18%</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Shares Outstanding (Milliarden)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Shares Outstanding</label>
+                        <span class="tooltip-icon" data-tooltip="Ausstehende Aktien in Milliarden. Q4 2025: 3.216B.">?</span>
+                    </div>
                     <input type="number" id="sharesOutstanding" value="3.216" min="1" max="10" step="0.001">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Net Cash (Mrd. USD)</label>
+                    <div class="control-label-row">
+                        <label class="control-label">Net Cash</label>
+                        <span class="tooltip-icon" data-tooltip="Netto-Bargeld in Mrd. USD. Cash - Schulden. Tesla Q4 2025: ~$32B Net Cash.">?</span>
+                    </div>
                     <input type="number" id="netCash" value="32" min="-50" max="100" step="1">
                 </div>
             </div>
