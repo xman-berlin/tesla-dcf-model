@@ -535,16 +535,13 @@
             border-radius: 6px;
             font-size: 11px;
             font-weight: 400;
-            z-index: 10000;
+            z-index: 99999;
             min-width: 220px;
             max-width: 300px;
             white-space: normal;
             line-height: 1.4;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .sidebar {
-            z-index: 100;
+            pointer-events: none;
         }
 
         .control-label-row {
@@ -1635,7 +1632,30 @@ EquityValue = EnterpriseValue + NetCash
             }
         }
 
+        let tooltipEl = null;
+
+        function showTooltip(icon, text) {
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.style.cssText = 'position:fixed;background:#0f172a;color:white;padding:10px 14px;border-radius:6px;font-size:11px;z-index:99999;max-width:280px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,0.2);pointer-events:none;';
+                document.body.appendChild(tooltipEl);
+            }
+            const rect = icon.getBoundingClientRect();
+            tooltipEl.textContent = text;
+            tooltipEl.style.left = (rect.right + 10) + 'px';
+            tooltipEl.style.top = (rect.top + rect.height/2) + 'px';
+            tooltipEl.style.transform = 'translateY(-50%)';
+        }
+
+        function hideTooltip() {
+            if (tooltipEl) tooltipEl.style.display = 'none';
+        }
+
         function setupEventListeners() {
+            document.querySelectorAll('.tooltip-icon').forEach(icon => {
+                icon.addEventListener('mouseenter', () => showTooltip(icon, icon.dataset.tooltip));
+                icon.addEventListener('mouseleave', hideTooltip);
+            });
             document.querySelectorAll('.accordion-header').forEach(header => {
                 header.addEventListener('click', () => {
                     const accordion = header.parentElement;
