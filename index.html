@@ -752,6 +752,33 @@
                         <span class="control-value" id="robotaxiMilesPerDayVal">150</span>
                     </div>
                 </div>
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label class="control-label">TAM (Mrd. Meilen/Jahr)</label>
+                        <span class="tooltip-icon" data-tooltip="Total Addressable Market in Mrd. Meilen/Jahr. US: ~100-200 Mrd. by 2030. Wächst ~20% p.a.">?</span>
+                    </div>
+                        <input type="number" id="robotaxiTAM" value="100" min="50" max="500" step="10">
+                </div>
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label class="control-label">Tesla Marktanteil</label>
+                        <span class="tooltip-icon" data-tooltip="Tesla's Anteil am Robotaxi-Markt. Wolfe Research schätzt ~30-50%.">?</span>
+                    </div>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiShare" min="10" max="80" value="30" step="5">
+                        <span class="control-value" id="robotaxiShareVal">30%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label class="control-label">Kosten/Meile (COGS)</label>
+                        <span class="tooltip-icon" data-tooltip="Kosten pro gefahrene Meile: Energie + Wartung + Versicherung + Abschreibung. $0.40-0.60 realistisch.">?</span>
+                    </div>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiCOGS" min="0.10" max="1.00" value="0.50" step="0.05">
+                        <span class="control-value" id="robotaxiCOGSVal">$0.50</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1187,6 +1214,9 @@ EquityValue = EnterpriseValue + NetCash
             const robotaxiPricePerMile = getInputValue('robotaxiPricePerMile');
             const robotaxiUtilization = getInputValue('robotaxiUtilization', true);
             const robotaxiMilesPerDay = getInputValue('robotaxiMilesPerDay');
+            const robotaxiTAM = getInputValue('robotaxiTAM');
+            const robotaxiShare = getInputValue('robotaxiShare', true);
+            const robotaxiCOGS = getInputValue('robotaxiCOGS');
             
             const optimusStartYear = Math.round(getInputValue('optimusStartYear'));
             const optimusUnits2027 = getInputValue('optimusUnits2027');
@@ -1242,15 +1272,16 @@ EquityValue = EnterpriseValue + NetCash
 
                 let robotaxiRevenue = 0;
                 if (year >= robotaxiStartYear) {
-                    let fleet = robotaxiFleet;
-                    for (let y = robotaxiStartYear + 1; y <= year; y++) {
-                        fleet *= (1 + robotaxiFleetGrowth);
-                    }
-                    const milesPerYear = fleet * robotaxiMilesPerDay * 365 * robotaxiUtilization;
-                    robotaxiRevenue = milesPerYear * robotaxiPricePerMile;
+                    const tamGrowth = 0.20;
+                    const yearsFromStart = year - robotaxiStartYear;
+                    const tamBase = robotaxiTAM * 1e9;
+                    const tam = tamBase * Math.pow(1 + tamGrowth, yearsFromStart);
+                    const teslaMiles = tam * robotaxiShare;
+                    robotaxiRevenue = teslaMiles * robotaxiPricePerMile;
                     robotaxiRevenue *= scenario.robotaxiMultiplier;
                 }
-                const robotaxiGP = robotaxiRevenue * 0.40;
+                const robotaxiCOGSAmount = robotaxiRevenue > 0 ? (robotaxiTAM * 1e9 * robotaxiShare * robotaxiCOGS) : 0;
+                const robotaxiGP = robotaxiRevenue - robotaxiCOGSAmount;
 
                 let optimusRevenue = 0;
                 let optimusGP = 0;
@@ -1685,7 +1716,7 @@ EquityValue = EnterpriseValue + NetCash
                 'autoGrowthEarly', 'autoGrowthLate', 'autoMargin',
                 'energyGrowth', 'energyMargin', 'servicesGrowth',
                 'fsdGrowth', 'robotaxiFleetStart', 'robotaxiFleetGrowth',
-                'robotaxiPricePerMile', 'robotaxiUtilization', 'robotaxiMilesPerDay',
+                'robotaxiPricePerMile', 'robotaxiUtilization', 'robotaxiMilesPerDay', 'robotaxiShare', 'robotaxiCOGS',
                 'optimusUnits2027', 'optimusUnits2030', 'optimusUnits2035',
                 'optimusASP', 'optimusMarginInitial', 'optimusMarginScale',
                 'wacc', 'terminalGrowth', 'taxRate'
@@ -1703,7 +1734,7 @@ EquityValue = EnterpriseValue + NetCash
 
             const inputIds = [
                 'autoASP', 'fsdSubscribers', 'fsdPrice',
-                'robotaxiStartYear', 'optimusStartYear',
+                'robotaxiStartYear', 'robotaxiTAM', 'optimusStartYear',
                 'terafabStartYear', 'terafabRevenue2030', 'terafabRevenue2035',
                 'sharesOutstanding', 'netCash'
             ];
@@ -1760,6 +1791,7 @@ EquityValue = EnterpriseValue + NetCash
                 fsdSubscribers: 1.1, fsdGrowth: 30, fsdPrice: 99,
                 robotaxiStartYear: 2026, robotaxiFleetStart: 7200, robotaxiFleetGrowth: 150,
                 robotaxiPricePerMile: 1, robotaxiUtilization: 55, robotaxiMilesPerDay: 150,
+                robotaxiTAM: 100, robotaxiShare: 30, robotaxiCOGS: 0.50,
                 optimusStartYear: 2027, optimusUnits2027: 25000, optimusUnits2030: 500000,
                 optimusUnits2035: 2000000, optimusASP: 30000, optimusMarginInitial: 10, optimusMarginScale: 40,
                 terafabEnabled: false, terafabStartYear: 2028, terafabRevenue2030: 5, terafabRevenue2035: 20,
