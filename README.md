@@ -29,7 +29,11 @@ git clone git@github.com:<user>/tesla-dcf-model.git
 cd tesla-dcf-model
 ```
 
-### Usage
+### Live Demo
+
+**Online verfügbar:** https://xman-berlin.github.io/tesla-dcf-model
+
+### Usage (lokal)
 
 ```bash
 open index.html
