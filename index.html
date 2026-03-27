@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesla DCF Modell</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --color-automotive: #2563eb;
+            --color-energy: #16a34a;
+            --color-services: #6b7280;
+            --color-fsd: #ea580c;
+            --color-robotaxi: #dc2626;
+            --color-optimus: #9333ea;
+            --color-terafab: #9ca3af;
+            --sidebar-width: 320px;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --accent: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: var(--accent);
+            color: white;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .accordion {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .accordion-header {
+            padding: 14px 20px;
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            font-size: 14px;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .accordion-header:hover {
+            background: #e2e8f0;
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .accordion.active .accordion-header::after {
+            content: '-';
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+        }
+
+        .accordion.active .accordion-content {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-value {
+            font-size: 13px;
+            font-weight: 500;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--border-color);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border-color);
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider::before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background: var(--accent);
+        }
+
+        .toggle input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+        }
+
+        .main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .kpi-card.primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .kpi-card.primary .kpi-value {
+            color: #4ade80;
+        }
+
+        .chart-container {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .chart-wrapper {
+            height: 300px;
+            position: relative;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .scenario-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .scenario-btn {
+            padding: 10px 24px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .scenario-btn:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .scenario-btn.active {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: white;
+        }
+
+        .scenario-btn.bull {
+            --scenario-color: #16a34a;
+        }
+
+        .scenario-btn.base {
+            --scenario-color: #2563eb;
+        }
+
+        .scenario-btn.bear {
+            --scenario-color: #dc2626;
+        }
+
+        .scenario-btn.active.bull,
+        .scenario-btn.active.base,
+        .scenario-btn.active.bear {
+            border-color: var(--accent);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 500;
+            text-align: left;
+        }
+
+        th:first-child, td:first-child {
+            text-align: left;
+        }
+
+        .table-container {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 16px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #1e293b;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .disclaimer {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .dcf-formula {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .sensitivity-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            background: var(--border-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .sensitivity-cell {
+            padding: 12px;
+            text-align: center;
+            font-size: 12px;
+            background: var(--bg-secondary);
+        }
+
+        .sensitivity-cell.header {
+            background: var(--bg-tertiary);
+            font-weight: 500;
+        }
+
+        .sensitivity-cell.positive {
+            background: #dcfce7;
+        }
+
+        .sensitivity-cell.negative {
+            background: #fee2e2;
+        }
+
+        .accordion-segment-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 8px;
+            display: inline-block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1280px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>Tesla DCF Modell</h1>
+            <p>Bewertung 2025-2035</p>
+        </div>
+        
+        <div class="accordion active" data-segment="automotive">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-automotive)"></span>Automotive</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">Lieferwachstum 2026-2030</label>
+                    <div class="control-row">
+                        <input type="range" id="autoGrowthEarly" min="0" max="25" value="10" step="1">
+                        <span class="control-value" id="autoGrowthEarlyVal">10%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Lieferwachstum 2031-2035</label>
+                    <div class="control-row">
+                        <input type="range" id="autoGrowthLate" min="0" max="15" value="7" step="1">
+                        <span class="control-value" id="autoGrowthLateVal">7%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Durchschnittspreis (ASP) in USD</label>
+                    <input type="number" id="autoASP" value="38800" min="30000" max="50000" step="1000">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Gross Margin</label>
+                    <div class="control-row">
+                        <input type="range" id="autoMargin" min="12" max="25" value="18" step="1">
+                        <span class="control-value" id="autoMarginVal">18%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" data-segment="energy">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-energy)"></span>Energy & Storage</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">Jährliches Wachstum</label>
+                    <div class="control-row">
+                        <input type="range" id="energyGrowth" min="10" max="50" value="25" step="1">
+                        <span class="control-value" id="energyGrowthVal">25%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Gross Margin</label>
+                    <div class="control-row">
+                        <input type="range" id="energyMargin" min="20" max="35" value="26" step="1">
+                        <span class="control-value" id="energyMarginVal">26%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" data-segment="services">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-services)"></span>Services</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">Jährliches Wachstum</label>
+                    <div class="control-row">
+                        <input type="range" id="servicesGrowth" min="5" max="25" value="15" step="1">
+                        <span class="control-value" id="servicesGrowthVal">15%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" data-segment="fsd">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-fsd)"></span>FSD Software</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">Aktuelle Subscribers (Millionen)</label>
+                    <input type="number" id="fsdSubscribers" value="1.1" min="0.1" max="10" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Wachstum p.a.</label>
+                    <div class="control-row">
+                        <input type="range" id="fsdGrowth" min="10" max="50" value="30" step="1">
+                        <span class="control-value" id="fsdGrowthVal">30%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Preis/Monat (USD)</label>
+                    <input type="number" id="fsdPrice" value="99" min="50" max="200" step="10">
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" data-segment="robotaxi">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-robotaxi)"></span>Robotaxi</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">Startjahr</label>
+                    <input type="number" id="robotaxiStartYear" value="2026" min="2025" max="2030">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Flotte 2026</label>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiFleetStart" min="1000" max="20000" value="7200" step="500">
+                        <span class="control-value" id="robotaxiFleetStartVal">7,200</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Flottenwachstum p.a.</label>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiFleetGrowth" min="50" max="300" value="150" step="10">
+                        <span class="control-value" id="robotaxiFleetGrowthVal">150%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Preis/Meile (USD)</label>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiPricePerMile" min="0.2" max="2" value="1" step="0.1">
+                        <span class="control-value" id="robotaxiPricePerMileVal">$1.00</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Utilization Rate</label>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiUtilization" min="30" max="80" value="55" step="5">
+                        <span class="control-value" id="robotaxiUtilizationVal">55%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Meilen/Fahrzeug/Tag</label>
+                    <div class="control-row">
+                        <input type="range" id="robotaxiMilesPerDay" min="50" max="300" value="150" step="10">
+                        <span class="control-value" id="robotaxiMilesPerDayVal">150</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" data-segment="optimus">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-optimus)"></span>Optimus</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">Startjahr Produktion</label>
+                    <input type="number" id="optimusStartYear" value="2027" min="2026" max="2030">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Units 2027</label>
+                    <div class="control-row">
+                        <input type="range" id="optimusUnits2027" min="1000" max="100000" value="25000" step="1000">
+                        <span class="control-value" id="optimusUnits2027Val">25K</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Units 2030</label>
+                    <div class="control-row">
+                        <input type="range" id="optimusUnits2030" min="50000" max="2000000" value="500000" step="10000">
+                        <span class="control-value" id="optimusUnits2030Val">500K</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Units 2035</label>
+                    <div class="control-row">
+                        <input type="range" id="optimusUnits2035" min="200000" max="10000000" value="2000000" step="50000">
+                        <span class="control-value" id="optimusUnits2035Val">2M</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">ASP (USD)</label>
+                    <div class="control-row">
+                        <input type="range" id="optimusASP" min="15000" max="100000" value="30000" step="1000">
+                        <span class="control-value" id="optimusASPVal">$30K</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Gross Margin Initial</label>
+                    <div class="control-row">
+                        <input type="range" id="optimusMarginInitial" min="5" max="20" value="10" step="1">
+                        <span class="control-value" id="optimusMarginInitialVal">10%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Gross Margin at Scale</label>
+                    <div class="control-row">
+                        <input type="range" id="optimusMarginScale" min="25" max="50" value="40" step="1">
+                        <span class="control-value" id="optimusMarginScaleVal">40%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" data-segment="terafab">
+            <div class="accordion-header">
+                <span><span class="accordion-segment-icon" style="background: var(--color-terafab)"></span>Terafab</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <div class="toggle-row">
+                        <label class="control-label">Aktivieren</label>
+                        <label class="toggle">
+                            <input type="checkbox" id="terafabEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="control-group hidden" id="terafabInputs">
+                    <label class="control-label">Startjahr</label>
+                    <input type="number" id="terafabStartYear" value="2028" min="2026" max="2032">
+                </div>
+                <div class="control-group hidden" id="terafabRevenueInputs">
+                    <label class="control-label">Revenue Schätzung 2030 (Mrd. USD)</label>
+                    <input type="number" id="terafabRevenue2030" value="5" min="1" max="50" step="1">
+                </div>
+                <div class="control-group hidden" id="terafabRevenueInputs2">
+                    <label class="control-label">Revenue Schätzung 2035 (Mrd. USD)</label>
+                    <input type="number" id="terafabRevenue2035" value="20" min="5" max="100" step="5">
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion active" data-segment="dcf">
+            <div class="accordion-header">
+                <span>DCF Parameter</span>
+            </div>
+            <div class="accordion-content">
+                <div class="control-group">
+                    <label class="control-label">WACC</label>
+                    <div class="control-row">
+                        <input type="range" id="wacc" min="7" max="15" value="10" step="0.5">
+                        <span class="control-value" id="waccVal">10%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Terminal Growth Rate</label>
+                    <div class="control-row">
+                        <input type="range" id="terminalGrowth" min="1" max="5" value="3" step="0.5">
+                        <span class="control-value" id="terminalGrowthVal">3%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Steuersatz</label>
+                    <div class="control-row">
+                        <input type="range" id="taxRate" min="10" max="25" value="18" step="1">
+                        <span class="control-value" id="taxRateVal">18%</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Shares Outstanding (Milliarden)</label>
+                    <input type="number" id="sharesOutstanding" value="3.216" min="1" max="10" step="0.001">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Net Cash (Mrd. USD)</label>
+                    <input type="number" id="netCash" value="32" min="-50" max="100" step="1">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="tabs">
+            <button class="tab active" data-tab="dashboard">Dashboard</button>
+            <button class="tab" data-tab="revenue">Revenue Detail</button>
+            <button class="tab" data-tab="dcf">DCF Calculation</button>
+            <button class="tab" data-tab="sensitivity">Sensitivity</button>
+        </div>
+
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="scenario-selector">
+                <button class="scenario-btn bull" data-scenario="bull">Bull</button>
+                <button class="scenario-btn base active" data-scenario="base">Base</button>
+                <button class="scenario-btn bear" data-scenario="bear">Bear</button>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card primary">
+                    <div class="kpi-label">Fair Value per Share</div>
+                    <div class="kpi-value" id="kpi-fair-value">$0.00</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Revenue 2035</div>
+                    <div class="kpi-value" id="kpi-revenue-2035">$0.0B</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total FCF 2035</div>
+                    <div class="kpi-value" id="kpi-fcf-2035">$0.0B</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Implied Market Cap</div>
+                    <div class="kpi-value" id="kpi-market-cap">$0.0B</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Revenue Forecast 2025-2035</div>
+                <div class="chart-wrapper">
+                    <canvas id="chart-revenue"></canvas>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-container">
+                    <div class="chart-title">Revenue Mix 2035</div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-mix-2035"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">FCF Development</div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-fcf"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Valuation Summary</div>
+                <div class="chart-wrapper">
+                    <canvas id="chart-valuation"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-revenue">
+            <div class="table-container">
+                <div class="table-header">Automotive Revenue Detail</div>
+                <table id="table-automotive">
+                    <thead>
+                        <tr>
+                            <th>Jahr</th>
+                            <th>Units</th>
+                            <th>ASP</th>
+                            <th>Revenue</th>
+                            <th>Gross Profit</th>
+                            <th>Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="table-container" style="margin-top: 20px;">
+                <div class="table-header">All Segments Revenue</div>
+                <table id="table-segments">
+                    <thead>
+                        <tr>
+                            <th>Jahr</th>
+                            <th>Automotive</th>
+                            <th>Energy</th>
+                            <th>Services</th>
+                            <th>FSD</th>
+                            <th>Robotaxi</th>
+                            <th>Optimus</th>
+                            <th>Terafab</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-dcf">
+            <div class="dcf-formula">
+fairValuePerShare = (Sum(PV(FCF[t])) + PV(TerminalValue) + NetCash) / SharesOutstanding<br><br>
+PV(FCF[t]) = FCF[t] / (1 + WACC)^t<br>
+TerminalValue = FCF[2035] * (1 + g) / (WACC - g)<br>
+EnterpriseValue = Sum(PV(FCF)) + PV(TerminalValue)<br>
+EquityValue = EnterpriseValue + NetCash
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">DCF Calculation</div>
+                <table id="table-dcf">
+                    <thead>
+                        <tr>
+                            <th>Jahr</th>
+                            <th>Revenue</th>
+                            <th>EBIT</th>
+                            <th>Taxes</th>
+                            <th>NOPAT</th>
+                            <th>FCF</th>
+                            <th>Discount Factor</th>
+                            <th>PV(FCF)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="kpi-grid" style="margin-top: 20px;">
+                <div class="kpi-card">
+                    <div class="kpi-label">Sum PV(FCF)</div>
+                    <div class="kpi-value" id="dcf-sum-pv">$0.0B</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Terminal Value</div>
+                    <div class="kpi-value" id="dcf-terminal-value">$0.0B</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">PV(Terminal Value)</div>
+                    <div class="kpi-value" id="dcf-pv-terminal">$0.0B</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Enterprise Value</div>
+                    <div class="kpi-value" id="dcf-enterprise-value">$0.0B</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-sensitivity">
+            <div class="chart-container">
+                <div class="chart-title">Sensitivity: Fair Value per Share (WACC vs Terminal Growth)</div>
+                <div id="sensitivity-heatmap"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Valuation Drivers Impact</div>
+                <div class="chart-wrapper">
+                    <canvas id="chart-tornado"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="disclaimer">Dies ist kein Investment-Rat. Alle Annahmen sind spekulativ.</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="btn-reset">Reset to Defaults</button>
+                <button class="btn btn-primary" id="btn-export">CSV Export</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const BASE_YEAR = 2025;
+        const END_YEAR = 2035;
+        const YEARS = Array.from({ length: END_YEAR - BASE_YEAR + 1 }, (_, i) => BASE_YEAR + i);
+
+        const SCENARIOS = {
+            bull: { wacc: 0.09, terminalGrowth: 0.04, robotaxiMultiplier: 1.5, optimusMultiplier: 2.0 },
+            base: { wacc: 0.11, terminalGrowth: 0.03, robotaxiMultiplier: 1.0, optimusMultiplier: 1.0 },
+            bear: { wacc: 0.13, terminalGrowth: 0.02, robotaxiMultiplier: 0.5, optimusMultiplier: 0.3 }
+        };
+
+        const BASE_DATA = {
+            revenue2025: 94.8,
+            automotive2025: 69.5,
+            energy2025: 12.8,
+            services2025: 12.5,
+            deliveries2025: 1.79,
+            sharesOutstanding: 3.216,
+            netCash: 32,
+            opexPercent: 0.10,
+            capexPercent: 0.12,
+            depreciationPercent: 0.05
+        };
+
+        let currentScenario = 'base';
+        let charts = {};
+        let projections = [];
+
+        function getInputValue(id, isPercent = false) {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            const val = parseFloat(el.value);
+            if (isNaN(val)) return 0;
+            return isPercent ? val / 100 : val;
+        }
+
+        function getInputValueByElement(el, isPercent = false) {
+            if (!el) return 0;
+            const val = parseFloat(el.value);
+            if (isNaN(val)) return 0;
+            return isPercent ? val / 100 : val;
+        }
+
+        function formatCurrency(value, decimals = 1) {
+            if (Math.abs(value) >= 1e9) {
+                return '$' + (value / 1e9).toFixed(decimals) + 'B';
+            } else if (Math.abs(value) >= 1e6) {
+                return '$' + (value / 1e6).toFixed(decimals) + 'M';
+            }
+            return '$' + value.toFixed(decimals);
+        }
+
+        function formatNumber(value, decimals = 0) {
+            return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+
+        function formatPercent(value) {
+            return (value * 100).toFixed(1) + '%';
+        }
+
+        function interpolate(startVal, endVal, progress) {
+            return startVal + (endVal - startVal) * progress;
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function calculateProjections() {
+            const scenario = SCENARIOS[currentScenario];
+            
+            const autoGrowthEarly = getInputValue('autoGrowthEarly', true);
+            const autoGrowthLate = getInputValue('autoGrowthLate', true);
+            const autoASP = getInputValue('autoASP');
+            const autoMargin = getInputValue('autoMargin', true);
+            
+            const energyGrowth = getInputValue('energyGrowth', true);
+            const energyMargin = getInputValue('energyMargin', true);
+            
+            const servicesGrowth = getInputValue('servicesGrowth', true);
+            
+            const fsdSubscribers = getInputValue('fsdSubscribers') * 1e6;
+            const fsdGrowth = getInputValue('fsdGrowth', true);
+            const fsdPrice = getInputValue('fsdPrice');
+            
+            const robotaxiStartYear = Math.round(getInputValue('robotaxiStartYear'));
+            let robotaxiFleet = getInputValue('robotaxiFleetStart');
+            const robotaxiFleetGrowth = getInputValue('robotaxiFleetGrowth', true);
+            const robotaxiPricePerMile = getInputValue('robotaxiPricePerMile');
+            const robotaxiUtilization = getInputValue('robotaxiUtilization', true);
+            const robotaxiMilesPerDay = getInputValue('robotaxiMilesPerDay');
+            
+            const optimusStartYear = Math.round(getInputValue('optimusStartYear'));
+            const optimusUnits2027 = getInputValue('optimusUnits2027');
+            const optimusUnits2030 = getInputValue('optimusUnits2030');
+            const optimusUnits2035 = getInputValue('optimusUnits2035');
+            const optimusASP = getInputValue('optimusASP');
+            const optimusMarginInitial = getInputValue('optimusMarginInitial', true);
+            const optimusMarginScale = getInputValue('optimusMarginScale', true);
+            
+            const terafabEnabled = document.getElementById('terafabEnabled')?.checked || false;
+            const terafabStartYear = terafabEnabled ? Math.round(getInputValue('terafabStartYear')) : 9999;
+            const terafabRevenue2030 = terafabEnabled ? getInputValue('terafabRevenue2030') * 1e9 : 0;
+            const terafabRevenue2035 = terafabEnabled ? getInputValue('terafabRevenue2035') * 1e9 : 0;
+            
+            const wacc = getInputValue('wacc', true);
+            const terminalGrowth = getInputValue('terminalGrowth', true);
+            const taxRate = getInputValue('taxRate', true);
+            const sharesOutstanding = getInputValue('sharesOutstanding') * 1e9;
+            const netCash = getInputValue('netCash') * 1e9;
+
+            projections = YEARS.map((year, idx) => {
+                const yearIndex = year - BASE_YEAR;
+                
+                let automotiveUnits = BASE_DATA.deliveries2025;
+                let automotiveRevenue = BASE_DATA.automotive2025 * 1e9;
+                let automotiveGP = 0;
+                
+                for (let y = BASE_YEAR + 1; y <= year; y++) {
+                    const growth = y <= 2030 ? autoGrowthEarly : autoGrowthLate;
+                    automotiveUnits *= (1 + growth);
+                }
+                automotiveRevenue = automotiveUnits * autoASP;
+                automotiveGP = automotiveRevenue * autoMargin;
+
+                let energyRevenue = BASE_DATA.energy2025 * 1e9;
+                let energyGP = 0;
+                for (let y = BASE_YEAR + 1; y <= year; y++) {
+                    energyRevenue *= (1 + energyGrowth);
+                }
+                energyGP = energyRevenue * energyMargin;
+
+                let servicesRevenue = BASE_DATA.services2025 * 1e9;
+                for (let y = BASE_YEAR + 1; y <= year; y++) {
+                    servicesRevenue *= (1 + servicesGrowth);
+                }
+                const servicesGP = servicesRevenue * 0.30;
+
+                let fsdRevenue = fsdSubscribers * fsdPrice * 12;
+                for (let y = BASE_YEAR + 1; y <= year; y++) {
+                    fsdRevenue *= (1 + fsdGrowth);
+                }
+                const fsdGP = fsdRevenue * 0.70;
+
+                let robotaxiRevenue = 0;
+                if (year >= robotaxiStartYear) {
+                    let fleet = robotaxiFleet;
+                    for (let y = robotaxiStartYear + 1; y <= year; y++) {
+                        fleet *= (1 + robotaxiFleetGrowth);
+                    }
+                    const milesPerYear = fleet * robotaxiMilesPerDay * 365 * robotaxiUtilization;
+                    robotaxiRevenue = milesPerYear * robotaxiPricePerMile;
+                    robotaxiRevenue *= scenario.robotaxiMultiplier;
+                }
+                const robotaxiGP = robotaxiRevenue * 0.40;
+
+                let optimusRevenue = 0;
+                let optimusGP = 0;
+                if (year >= optimusStartYear) {
+                    let units;
+                    if (year <= 2027) {
+                        units = interpolate(0, optimusUnits2027, (year - optimusStartYear + 1) / (2027 - optimusStartYear + 1));
+                    } else if (year <= 2030) {
+                        units = interpolate(optimusUnits2027, optimusUnits2030, (year - 2027) / 3);
+                    } else {
+                        units = interpolate(optimusUnits2035, optimusUnits2035, (year - 2030) / 5);
+                    }
+                    const progress = clamp((year - optimusStartYear) / 5, 0, 1);
+                    const margin = interpolate(optimusMarginInitial, optimusMarginScale, progress);
+                    optimusRevenue = units * optimusASP;
+                    optimusGP = optimusRevenue * margin;
+                    optimusRevenue *= scenario.optimusMultiplier;
+                    optimusGP *= scenario.optimusMultiplier;
+                }
+
+                let terafabRevenue = 0;
+                if (year >= terafabStartYear) {
+                    if (year <= 2030) {
+                        terafabRevenue = interpolate(0, terafabRevenue2030, (year - terafabStartYear + 1) / (2030 - terafabStartYear + 1));
+                    } else {
+                        terafabRevenue = interpolate(terafabRevenue2030, terafabRevenue2035, (year - 2030) / 5);
+                    }
+                }
+                const terafabGP = terafabRevenue * 0.35;
+
+                const totalRevenue = automotiveRevenue + energyRevenue + servicesRevenue + fsdRevenue + robotaxiRevenue + optimusRevenue + terafabRevenue;
+                const totalGP = automotiveGP + energyGP + servicesGP + fsdGP + robotaxiGP + optimusGP + terafabGP;
+
+                const opex = totalRevenue * BASE_DATA.opexPercent;
+                const ebit = totalGP - opex;
+                const taxes = Math.max(0, ebit * taxRate);
+                const nopat = ebit - taxes;
+                const depreciation = totalRevenue * BASE_DATA.depreciationPercent;
+                const capex = totalRevenue * BASE_DATA.capexPercent;
+                const fcf = nopat + depreciation - capex;
+
+                const discountFactor = 1 / Math.pow(1 + wacc, yearIndex + 1);
+                const pvFCF = fcf * discountFactor;
+
+                return {
+                    year,
+                    automotive: { units: automotiveUnits, revenue: automotiveRevenue, gp: automotiveGP, margin: autoMargin },
+                    energy: { revenue: energyRevenue, gp: energyGP, margin: energyMargin },
+                    services: { revenue: servicesRevenue, gp: servicesGP },
+                    fsd: { revenue: fsdRevenue, gp: fsdGP },
+                    robotaxi: { revenue: robotaxiRevenue, gp: robotaxiGP },
+                    optimus: { revenue: optimusRevenue, gp: optimusGP },
+                    terafab: { revenue: terafabRevenue, gp: terafabGP },
+                    total: { revenue: totalRevenue, gp: totalGP, ebit, taxes, nopat, fcf, discountFactor, pvFCF }
+                };
+            });
+
+            return { wacc, terminalGrowth, sharesOutstanding, netCash };
+        }
+
+        function calculateDCF(params) {
+            const { wacc, terminalGrowth, sharesOutstanding, netCash } = params;
+            
+            const sumPV = projections.reduce((sum, p) => sum + p.total.pvFCF, 0);
+            
+            const lastYear = projections[projections.length - 1];
+            const finalFCF = lastYear.total.fcf;
+            
+            const denominator = wacc - terminalGrowth;
+            const terminalValue = denominator > 0 ? finalFCF * (1 + terminalGrowth) / denominator : 0;
+            
+            const pvTerminal = terminalValue / Math.pow(1 + wacc, END_YEAR - BASE_YEAR + 1);
+            
+            const enterpriseValue = sumPV + pvTerminal;
+            const equityValue = enterpriseValue + netCash;
+            const fairValuePerShare = sharesOutstanding > 0 ? equityValue / sharesOutstanding : 0;
+
+            return { sumPV, terminalValue, pvTerminal, enterpriseValue, equityValue, fairValuePerShare };
+        }
+
+        function updateDisplay(dcfResult) {
+            document.getElementById('kpi-fair-value').textContent = formatCurrency(dcfResult.fairValuePerShare, 2);
+            
+            const lastProj = projections[projections.length - 1];
+            document.getElementById('kpi-revenue-2035').textContent = formatCurrency(lastProj.total.revenue);
+            document.getElementById('kpi-fcf-2035').textContent = formatCurrency(lastProj.total.fcf);
+            document.getElementById('kpi-market-cap').textContent = formatCurrency(dcfResult.equityValue);
+
+            document.getElementById('dcf-sum-pv').textContent = formatCurrency(dcfResult.sumPV);
+            document.getElementById('dcf-terminal-value').textContent = formatCurrency(dcfResult.terminalValue);
+            document.getElementById('dcf-pv-terminal').textContent = formatCurrency(dcfResult.pvTerminal);
+            document.getElementById('dcf-enterprise-value').textContent = formatCurrency(dcfResult.enterpriseValue);
+        }
+
+        function updateCharts() {
+            updateRevenueChart();
+            updateMixChart2035();
+            updateFCFChart();
+            updateValuationChart();
+            updateSensitivityHeatmap();
+            updateTornadoChart();
+            updateTables();
+        }
+
+        function updateRevenueChart() {
+            const ctx = document.getElementById('chart-revenue').getContext('2d');
+            
+            if (charts.revenue) charts.revenue.destroy();
+
+            const labels = projections.map(p => p.year.toString());
+            const data = {
+                labels,
+                datasets: [
+                    { label: 'Automotive', data: projections.map(p => p.automotive.revenue / 1e9), backgroundColor: '#2563eb', fill: true },
+                    { label: 'Energy', data: projections.map(p => p.energy.revenue / 1e9), backgroundColor: '#16a34a', fill: true },
+                    { label: 'Services', data: projections.map(p => p.services.revenue / 1e9), backgroundColor: '#6b7280', fill: true },
+                    { label: 'FSD', data: projections.map(p => p.fsd.revenue / 1e9), backgroundColor: '#ea580c', fill: true },
+                    { label: 'Robotaxi', data: projections.map(p => p.robotaxi.revenue / 1e9), backgroundColor: '#dc2626', fill: true },
+                    { label: 'Optimus', data: projections.map(p => p.optimus.revenue / 1e9), backgroundColor: '#9333ea', fill: true },
+                    { label: 'Terafab', data: projections.map(p => p.terafab.revenue / 1e9), backgroundColor: '#9ca3af', fill: true }
+                ]
+            };
+
+            charts.revenue = new Chart(ctx, {
+                type: 'line',
+                data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, title: { display: true, text: 'Revenue (Billionen USD)' }, ticks: { callback: v => '$' + v + 'B' } }
+                    }
+                }
+            });
+        }
+
+        function updateMixChart2035() {
+            const ctx = document.getElementById('chart-mix-2035').getContext('2d');
+            if (charts.mix2035) charts.mix2035.destroy();
+
+            const last = projections[projections.length - 1];
+            const data = {
+                labels: ['Automotive', 'Energy', 'Services', 'FSD', 'Robotaxi', 'Optimus', 'Terafab'],
+                datasets: [{
+                    data: [
+                        last.automotive.revenue / 1e9,
+                        last.energy.revenue / 1e9,
+                        last.services.revenue / 1e9,
+                        last.fsd.revenue / 1e9,
+                        last.robotaxi.revenue / 1e9,
+                        last.optimus.revenue / 1e9,
+                        last.terafab.revenue / 1e9
+                    ],
+                    backgroundColor: ['#2563eb', '#16a34a', '#6b7280', '#ea580c', '#dc2626', '#9333ea', '#9ca3af']
+                }]
+            };
+
+            charts.mix2035 = new Chart(ctx, {
+                type: 'doughnut',
+                data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+
+        function updateFCFChart() {
+            const ctx = document.getElementById('chart-fcf').getContext('2d');
+            if (charts.fcf) charts.fcf.destroy();
+
+            const labels = projections.map(p => p.year.toString());
+            const data = {
+                labels,
+                datasets: [{
+                    label: 'Free Cash Flow',
+                    data: projections.map(p => p.total.fcf / 1e9),
+                    backgroundColor: '#0f172a'
+                }]
+            };
+
+            charts.fcf = new Chart(ctx, {
+                type: 'bar',
+                data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { title: { display: true, text: 'FCF (Billionen USD)' }, ticks: { callback: v => '$' + v + 'B' } }
+                    }
+                }
+            });
+        }
+
+        function updateValuationChart() {
+            const ctx = document.getElementById('chart-valuation').getContext('2d');
+            if (charts.valuation) charts.valuation.destroy();
+
+            const scenarioResults = {};
+            const savedScenario = currentScenario;
+            
+            for (const scen of ['bull', 'base', 'bear']) {
+                currentScenario = scen;
+                const params = calculateProjections();
+                const dcf = calculateDCF(params);
+                scenarioResults[scen] = dcf.fairValuePerShare;
+            }
+            currentScenario = savedScenario;
+            
+            const finalParams = calculateProjections();
+            const finalDCF = calculateDCF(finalParams);
+
+            const data = {
+                labels: ['Bull', 'Base', 'Bear'],
+                datasets: [{
+                    label: 'Fair Value per Share',
+                    data: [scenarioResults.bull, scenarioResults.base, scenarioResults.bear],
+                    backgroundColor: ['#16a34a', '#2563eb', '#dc2626']
+                }]
+            };
+
+            charts.valuation = new Chart(ctx, {
+                type: 'bar',
+                data,
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'USD per Share' }, ticks: { callback: v => '$' + v } }
+                    }
+                }
+            });
+        }
+
+        function updateSensitivityHeatmap() {
+            const container = document.getElementById('sensitivity-heatmap');
+            container.innerHTML = '';
+            
+            const waccValues = [0.07, 0.09, 0.11, 0.13, 0.15];
+            const growthValues = [0.01, 0.02, 0.03, 0.04, 0.05];
+            
+            let html = '<div class="sensitivity-grid">';
+            html += '<div class="sensitivity-cell header">WACC \\ g</div>';
+            for (const g of growthValues) {
+                html += `<div class="sensitivity-cell header">${(g * 100).toFixed(0)}%</div>`;
+            }
+            
+            const savedWacc = getInputValue('wacc', true);
+            const savedGrowth = getInputValue('terminalGrowth', true);
+            
+            for (const w of waccValues) {
+                html += `<div class="sensitivity-cell header">${(w * 100).toFixed(0)}%</div>`;
+                for (const g of growthValues) {
+                    document.getElementById('wacc').value = w * 100;
+                    document.getElementById('terminalGrowth').value = g * 100;
+                    const params = calculateProjections();
+                    const dcf = calculateDCF(params);
+                    
+                    const isCurrent = Math.abs(w - savedWacc) < 0.001 && Math.abs(g - savedGrowth) < 0.001;
+                    const cssClass = dcf.fairValuePerShare > 500 ? 'positive' : dcf.fairValuePerShare < 100 ? 'negative' : '';
+                    
+                    html += `<div class="sensitivity-cell ${cssClass} ${isCurrent ? 'header' : ''}">$${dcf.fairValuePerShare.toFixed(0)}</div>`;
+                }
+            }
+            
+            document.getElementById('wacc').value = savedWacc * 100;
+            document.getElementById('terminalGrowth').value = savedGrowth * 100;
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function updateTornadoChart() {
+            const ctx = document.getElementById('chart-tornado').getContext('2d');
+            if (charts.tornado) charts.tornado.destroy();
+
+            const baseParams = calculateProjections();
+            const baseDCF = calculateDCF(baseParams);
+            const baseValue = baseDCF.fairValuePerShare;
+            
+            const impacts = [];
+            
+            const testCases = [
+                { id: 'wacc', label: 'WACC -1%', apply: () => { document.getElementById('wacc').value = (getInputValue('wacc', true) - 0.01) * 100; } },
+                { id: 'wacc+', label: 'WACC +1%', apply: () => { document.getElementById('wacc').value = (getInputValue('wacc', true) + 0.01) * 100; } },
+                { id: 'growth', label: 'Terminal Growth -0.5%', apply: () => { document.getElementById('terminalGrowth').value = (getInputValue('terminalGrowth', true) - 0.005) * 100; } },
+                { id: 'growth+', label: 'Terminal Growth +0.5%', apply: () => { document.getElementById('terminalGrowth').value = (getInputValue('terminalGrowth', true) + 0.005) * 100; } }
+            ];
+            
+            for (const tc of testCases) {
+                const saved = getInputValue(tc.id.replace('+', ''), true);
+                tc.apply();
+                const params = calculateProjections();
+                const dcf = calculateDCF(params);
+                impacts.push({ label: tc.label, value: dcf.fairValuePerShare - baseValue });
+            }
+
+            const data = {
+                labels: impacts.map(i => i.label),
+                datasets: [{
+                    label: 'Impact on Fair Value ($)',
+                    data: impacts.map(i => i.value),
+                    backgroundColor: impacts.map(i => i.value >= 0 ? '#16a34a' : '#dc2626')
+                }]
+            };
+
+            charts.tornado = new Chart(ctx, {
+                type: 'bar',
+                data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Parameter Change' } },
+                        y: { title: { display: true, text: 'Impact ($ per share)' }, ticks: { callback: v => (v >= 0 ? '+' : '') + '$' + v.toFixed(0) } }
+                    }
+                }
+            });
+        }
+
+        function updateTables() {
+            const autoTable = document.querySelector('#table-automotive tbody');
+            autoTable.innerHTML = projections.map(p => `
+                <tr>
+                    <td>${p.year}</td>
+                    <td>${formatNumber(p.automotive.units / 1e6, 2)}M</td>
+                    <td>${formatCurrency(p.automotive.revenue / p.automotive.units)}</td>
+                    <td>${formatCurrency(p.automotive.revenue)}</td>
+                    <td>${formatCurrency(p.automotive.gp)}</td>
+                    <td>${formatPercent(p.automotive.margin)}</td>
+                </tr>
+            `).join('');
+
+            const segTable = document.querySelector('#table-segments tbody');
+            segTable.innerHTML = projections.map(p => `
+                <tr>
+                    <td>${p.year}</td>
+                    <td>${formatCurrency(p.automotive.revenue)}</td>
+                    <td>${formatCurrency(p.energy.revenue)}</td>
+                    <td>${formatCurrency(p.services.revenue)}</td>
+                    <td>${formatCurrency(p.fsd.revenue)}</td>
+                    <td>${formatCurrency(p.robotaxi.revenue)}</td>
+                    <td>${formatCurrency(p.optimus.revenue)}</td>
+                    <td>${formatCurrency(p.terafab.revenue)}</td>
+                    <td><strong>${formatCurrency(p.total.revenue)}</strong></td>
+                </tr>
+            `).join('');
+
+            const dcfTable = document.querySelector('#table-dcf tbody');
+            dcfTable.innerHTML = projections.map(p => `
+                <tr>
+                    <td>${p.year}</td>
+                    <td>${formatCurrency(p.total.revenue)}</td>
+                    <td>${formatCurrency(p.total.ebit)}</td>
+                    <td>${formatCurrency(p.total.taxes)}</td>
+                    <td>${formatCurrency(p.total.nopat)}</td>
+                    <td>${formatCurrency(p.total.fcf)}</td>
+                    <td>${p.total.discountFactor.toFixed(3)}</td>
+                    <td>${formatCurrency(p.total.pvFCF)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function recalculate() {
+            try {
+                const params = calculateProjections();
+                const dcf = calculateDCF(params);
+                updateDisplay(dcf);
+                updateCharts();
+            } catch (e) {
+                console.error('Calculation error:', e);
+            }
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const accordion = header.parentElement;
+                    accordion.classList.toggle('active');
+                });
+            });
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                });
+            });
+
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentScenario = btn.dataset.scenario;
+                    recalculate();
+                });
+            });
+
+            const sliderIds = [
+                'autoGrowthEarly', 'autoGrowthLate', 'autoMargin',
+                'energyGrowth', 'energyMargin', 'servicesGrowth',
+                'fsdGrowth', 'robotaxiFleetStart', 'robotaxiFleetGrowth',
+                'robotaxiPricePerMile', 'robotaxiUtilization', 'robotaxiMilesPerDay',
+                'optimusUnits2027', 'optimusUnits2030', 'optimusUnits2035',
+                'optimusASP', 'optimusMarginInitial', 'optimusMarginScale',
+                'wacc', 'terminalGrowth', 'taxRate'
+            ];
+
+            sliderIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => {
+                        updateSliderValue(id);
+                        recalculate();
+                    });
+                }
+            });
+
+            const inputIds = [
+                'autoASP', 'fsdSubscribers', 'fsdPrice',
+                'robotaxiStartYear', 'optimusStartYear',
+                'terafabStartYear', 'terafabRevenue2030', 'terafabRevenue2035',
+                'sharesOutstanding', 'netCash'
+            ];
+
+            inputIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', recalculate);
+                }
+            });
+
+            const terafabToggle = document.getElementById('terafabEnabled');
+            if (terafabToggle) {
+                terafabToggle.addEventListener('change', () => {
+                    const inputs = document.querySelectorAll('#terafabInputs, #terafabRevenueInputs, #terafabRevenueInputs2');
+                    inputs.forEach(el => el.classList.toggle('hidden', !terafabToggle.checked));
+                    recalculate();
+                });
+            }
+
+            document.getElementById('btn-reset').addEventListener('click', resetToDefaults);
+            document.getElementById('btn-export').addEventListener('click', exportCSV);
+        }
+
+        function updateSliderValue(id) {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById(id + 'Val');
+            if (!el || !valEl) return;
+            
+            const val = parseFloat(el.value);
+            if (id.includes('ASP') || id.includes('Price') || id.includes('Mile') || id.includes('ASP')) {
+                if (val >= 1000) {
+                    valEl.textContent = '$' + formatNumber(val / 1000, 1) + 'K';
+                } else {
+                    valEl.textContent = '$' + val;
+                }
+            } else if (id.includes('Units')) {
+                if (val >= 1000000) {
+                    valEl.textContent = formatNumber(val / 1000000, 1) + 'M';
+                } else {
+                    valEl.textContent = formatNumber(val / 1000, 0) + 'K';
+                }
+            } else if (id.includes('Fleet') || id.includes('Miles')) {
+                valEl.textContent = formatNumber(val);
+            } else {
+                valEl.textContent = val + '%';
+            }
+        }
+
+        function resetToDefaults() {
+            const defaults = {
+                autoGrowthEarly: 10, autoGrowthLate: 7, autoASP: 38800, autoMargin: 18,
+                energyGrowth: 25, energyMargin: 26, servicesGrowth: 15,
+                fsdSubscribers: 1.1, fsdGrowth: 30, fsdPrice: 99,
+                robotaxiStartYear: 2026, robotaxiFleetStart: 7200, robotaxiFleetGrowth: 150,
+                robotaxiPricePerMile: 1, robotaxiUtilization: 55, robotaxiMilesPerDay: 150,
+                optimusStartYear: 2027, optimusUnits2027: 25000, optimusUnits2030: 500000,
+                optimusUnits2035: 2000000, optimusASP: 30000, optimusMarginInitial: 10, optimusMarginScale: 40,
+                terafabEnabled: false, terafabStartYear: 2028, terafabRevenue2030: 5, terafabRevenue2035: 20,
+                wacc: 10, terminalGrowth: 3, taxRate: 18,
+                sharesOutstanding: 3.216, netCash: 32
+            };
+
+            for (const [id, val] of Object.entries(defaults)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (el.type === 'checkbox') {
+                        el.checked = val;
+                    } else {
+                        el.value = val;
+                    }
+                }
+            }
+
+            document.querySelectorAll('#terafabInputs, #terafabRevenueInputs, #terafabRevenueInputs2').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            sliderIds = [
+                'autoGrowthEarly', 'autoGrowthLate', 'autoMargin',
+                'energyGrowth', 'energyMargin', 'servicesGrowth',
+                'fsdGrowth', 'robotaxiFleetStart', 'robotaxiFleetGrowth',
+                'robotaxiPricePerMile', 'robotaxiUtilization', 'robotaxiMilesPerDay',
+                'optimusUnits2027', 'optimusUnits2030', 'optimusUnits2035',
+                'optimusASP', 'optimusMarginInitial', 'optimusMarginScale',
+                'wacc', 'terminalGrowth', 'taxRate'
+            ];
+            
+            sliderIds.forEach(id => updateSliderValue(id));
+            
+            recalculate();
+        }
+
+        function exportCSV() {
+            let csv = 'Jahr,Automotive,Energy,Services,FSD,Robotaxi,Optimus,Terafab,Total Revenue,EBIT,FCF\n';
+            
+            projections.forEach(p => {
+                csv += `${p.year},`;
+                csv += `${(p.automotive.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.energy.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.services.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.fsd.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.robotaxi.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.optimus.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.terafab.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.total.revenue/1e9).toFixed(2)},`;
+                csv += `${(p.total.ebit/1e9).toFixed(2)},`;
+                csv += `${(p.total.fcf/1e9).toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tesla_dcf_projections.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            recalculate();
+        });
+    </script>
+</body>
+</html>

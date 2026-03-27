@@ -66,16 +66,16 @@ Oder einfach `index.html` im Browser öffnen.
 
 ## Project Status
 
-- [ ] HTML-Grundstruktur + CSS Layout
-- [ ] Assumptions-Panel (Slider/Inputs/Toggles)
-- [ ] Berechnungslogik (JavaScript)
-- [ ] Dashboard KPI-Karten
-- [ ] Charts (Revenue, FCF, Segment Mix)
-- [ ] Revenue Detail Tabelle
-- [ ] DCF Calculation Tabelle
-- [ ] Sensitivity Heatmap + Tornado Chart
-- [ ] CSV-Export
-- [ ] Polishing
+- [x] HTML-Grundstruktur + CSS Layout
+- [x] Assumptions-Panel (Slider/Inputs/Toggles)
+- [x] Berechnungslogik (JavaScript)
+- [x] Dashboard KPI-Karten
+- [x] Charts (Revenue, FCF, Segment Mix)
+- [x] Revenue Detail Tabelle
+- [x] DCF Calculation Tabelle
+- [x] Sensitivity Heatmap + Tornado Chart
+- [x] CSV-Export
+- [x] Polishing
 
 See [plan.md](./plan.md) for the full implementation plan.
 
