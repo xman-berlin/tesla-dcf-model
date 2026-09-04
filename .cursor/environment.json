@@ -1,0 +1,17 @@
+{
+  "name": "Tesla DCF Model",
+  "install": "python3 --version && test -f index.html && echo 'No dependencies to install (single-file app, Chart.js via CDN).'",
+  "terminals": [
+    {
+      "name": "static-server",
+      "command": "python3 -m http.server 8000 --bind 0.0.0.0",
+      "description": "Serves the single-file app at http://localhost:8000/index.html"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web server",
+      "port": 8000
+    }
+  ]
+}
